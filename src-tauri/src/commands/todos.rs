@@ -1,0 +1,164 @@
+use crate::{db::AppDb, models::Todo};
+use rusqlite::{params, Connection};
+use tauri::State;
+
+fn validate_todo_status(status: &str) -> Result<(), String> {
+    match status {
+        "backlog" | "todo" | "doing" | "done" => Ok(()),
+        _ => Err("status must be backlog, todo, doing, or done".to_string()),
+    }
+}
+
+#[tauri::command]
+pub fn list_todos(db: State<AppDb>) -> Result<Vec<Todo>, String> {
+    let connection = db.0.lock().map_err(|error| error.to_string())?;
+    let mut statement = connection
+        .prepare(
+            "
+            SELECT id, title, description, status, priority, due_at, created_at, updated_at
+            FROM todos
+            ORDER BY
+                CASE status
+                    WHEN 'backlog' THEN 0
+                    WHEN 'todo' THEN 1
+                    WHEN 'doing' THEN 2
+                    WHEN 'done' THEN 3
+                END,
+                updated_at DESC,
+                id DESC
+            ",
+        )
+        .map_err(|error| error.to_string())?;
+
+    let rows = statement
+        .query_map([], |row| {
+            Ok(Todo {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                description: row.get(2)?,
+                status: row.get(3)?,
+                priority: row.get(4)?,
+                due_at: row.get(5)?,
+                created_at: row.get(6)?,
+                updated_at: row.get(7)?,
+            })
+        })
+        .map_err(|error| error.to_string())?;
+
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn create_todo(
+    db: State<AppDb>,
+    title: String,
+    description: String,
+    status: String,
+    priority: String,
+    due_at: Option<String>,
+) -> Result<Todo, String> {
+    validate_todo_status(&status)?;
+    let connection = db.0.lock().map_err(|error| error.to_string())?;
+    connection
+        .execute(
+            "
+            INSERT INTO todos (title, description, status, priority, due_at)
+            VALUES (?1, ?2, ?3, ?4, ?5)
+            ",
+            params![title.trim(), description.trim(), status, priority, due_at],
+        )
+        .map_err(|error| error.to_string())?;
+
+    get_todo(&connection, connection.last_insert_rowid())
+}
+
+#[tauri::command]
+pub fn update_todo(
+    db: State<AppDb>,
+    id: i64,
+    title: String,
+    description: String,
+    status: String,
+    priority: String,
+    due_at: Option<String>,
+) -> Result<Todo, String> {
+    validate_todo_status(&status)?;
+    let connection = db.0.lock().map_err(|error| error.to_string())?;
+    connection
+        .execute(
+            "
+            UPDATE todos
+            SET title = ?1,
+                description = ?2,
+                status = ?3,
+                priority = ?4,
+                due_at = ?5,
+                updated_at = datetime('now', 'localtime')
+            WHERE id = ?6
+            ",
+            params![
+                title.trim(),
+                description.trim(),
+                status,
+                priority,
+                due_at,
+                id
+            ],
+        )
+        .map_err(|error| error.to_string())?;
+
+    get_todo(&connection, id)
+}
+
+#[tauri::command]
+pub fn move_todo(db: State<AppDb>, id: i64, status: String) -> Result<Todo, String> {
+    validate_todo_status(&status)?;
+    let connection = db.0.lock().map_err(|error| error.to_string())?;
+    connection
+        .execute(
+            "
+            UPDATE todos
+            SET status = ?1, updated_at = datetime('now', 'localtime')
+            WHERE id = ?2
+            ",
+            params![status, id],
+        )
+        .map_err(|error| error.to_string())?;
+
+    get_todo(&connection, id)
+}
+
+#[tauri::command]
+pub fn delete_todo(db: State<AppDb>, id: i64) -> Result<(), String> {
+    let connection = db.0.lock().map_err(|error| error.to_string())?;
+    connection
+        .execute("DELETE FROM todos WHERE id = ?1", params![id])
+        .map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+fn get_todo(connection: &Connection, id: i64) -> Result<Todo, String> {
+    connection
+        .query_row(
+            "
+            SELECT id, title, description, status, priority, due_at, created_at, updated_at
+            FROM todos
+            WHERE id = ?1
+            ",
+            params![id],
+            |row| {
+                Ok(Todo {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    description: row.get(2)?,
+                    status: row.get(3)?,
+                    priority: row.get(4)?,
+                    due_at: row.get(5)?,
+                    created_at: row.get(6)?,
+                    updated_at: row.get(7)?,
+                })
+            },
+        )
+        .map_err(|error| error.to_string())
+}
