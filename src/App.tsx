@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ComponentType } from "react";
 import { CheckSquare, Clock3, SquarePen } from "lucide-react";
 import { NotesPanel } from "./features/notes/NotesPanel";
@@ -31,11 +31,6 @@ function App() {
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [activeTab, setActiveTab] = useState<ActiveTab>("todos");
-
-  const doingTask = useMemo(
-    () => todos.find((todo) => todo.status === "doing") ?? null,
-    [todos],
-  );
 
   useEffect(() => {
     void loadDashboard();
@@ -95,7 +90,6 @@ function App() {
 
           {activeTab === "pomodoro" ? (
             <PomodoroPanel
-              doingTask={doingTask}
               onError={setErrorMessage}
               sessions={sessions}
               setSessions={setSessions}
