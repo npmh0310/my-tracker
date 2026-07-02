@@ -13,9 +13,9 @@ export function Calendar({ className, ...props }: DayPickerProps) {
         caption_label: "text-sm font-bold",
         nav: "absolute left-0 right-0 top-0 flex h-7 items-center justify-between",
         button_previous:
-          "grid h-6 w-6 place-items-center rounded-md text-zinc-500 hover:bg-zinc-100",
+          "grid h-6 w-6 place-items-center rounded-3xl text-zinc-500 hover:bg-zinc-100",
         button_next:
-          "grid h-6 w-6 place-items-center rounded-md text-zinc-500 hover:bg-zinc-100",
+          "grid h-6 w-6 place-items-center rounded-3xl text-zinc-500 hover:bg-zinc-100",
         chevron: "h-4 w-4",
         weekdays: "grid grid-cols-7",
         weekday:
@@ -23,9 +23,9 @@ export function Calendar({ className, ...props }: DayPickerProps) {
         week: "grid grid-cols-7",
         day: "grid h-7 w-7 place-items-center p-0 text-sm",
         day_button:
-          "grid h-6 w-6 place-items-center rounded-md text-sm font-medium hover:bg-zinc-100",
+          "grid h-6 w-6 place-items-center rounded-3xl text-sm font-medium hover:bg-zinc-100",
         selected:
-          "[&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary",
+          "[&>button]:bg-rose-500 [&>button]:text-white [&>button]:shadow-sm [&>button]:hover:bg-rose-600 [&.rdp-today>button]:text-white",
         today: "[&>button]:font-bold [&>button]:text-red-500",
         outside: "[&>button]:text-zinc-300",
         disabled: "[&>button]:opacity-40",

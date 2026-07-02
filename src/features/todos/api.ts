@@ -1,5 +1,5 @@
 import { callCommand } from "../../shared/lib/tauri";
-import { Todo, TodoPriority, TodoStatus } from "./types";
+import { Todo, TodoPriority, TodoStatus, TodoTag } from "./types";
 
 export function listTodos() {
   return callCommand<Todo[]>("list_todos");
@@ -10,6 +10,7 @@ export function createTodo(input: {
   description: string;
   status: TodoStatus;
   priority: TodoPriority;
+  tag: TodoTag;
   dueAt: string | null;
 }) {
   return callCommand<Todo>("create_todo", input);

@@ -17,6 +17,7 @@ pub struct Todo {
     pub description: String,
     pub status: String,
     pub priority: String,
+    pub tag: String,
     pub due_at: Option<String>,
     pub created_at: String,
     pub updated_at: String,

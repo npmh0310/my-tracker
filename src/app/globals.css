@@ -72,4 +72,20 @@
     font-family:
       "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   }
+
+  .toast-success {
+    @apply border-emerald-200 bg-emerald-50 text-emerald-900;
+  }
+
+  .toast-info {
+    @apply border-sky-200 bg-sky-50 text-sky-900;
+  }
+
+  .toast-action {
+    @apply rounded-3xl bg-white/80 px-3 text-emerald-900 shadow-sm hover:bg-white;
+  }
+
+  .toast-info .toast-action {
+    @apply text-sky-900;
+  }
 }

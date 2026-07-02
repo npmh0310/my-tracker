@@ -9,15 +9,15 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variants: Record<ButtonVariant, string> = {
   default:
-    "bg-primary text-primary-foreground hover:bg-primary/90 min-h-11 rounded-full px-5 font-bold",
+    "bg-primary text-primary-foreground hover:bg-primary/90 min-h-11 rounded-3xl px-5 font-bold",
   secondary:
-    "bg-muted text-foreground hover:bg-muted/80 min-h-10 rounded-full px-4 font-semibold",
+    "bg-muted text-foreground hover:bg-muted/80 min-h-10 rounded-3xl px-4 font-semibold",
   ghost:
-    "bg-transparent text-muted-foreground hover:bg-muted min-h-10 rounded-full px-4 font-semibold",
+    "bg-transparent text-muted-foreground hover:bg-muted min-h-10 rounded-3xl px-4 font-semibold",
   destructive:
-    "bg-rose-50 text-destructive hover:bg-rose-100 min-h-10 rounded-full px-4 font-semibold",
+    "bg-rose-50 text-destructive hover:bg-rose-100 min-h-10 rounded-3xl px-4 font-semibold",
   icon:
-    "grid h-10 w-10 place-items-center rounded-full bg-muted text-muted-foreground hover:bg-zinc-200",
+    "grid h-10 w-10 place-items-center rounded-3xl bg-muted text-muted-foreground hover:bg-zinc-200",
 };
 
 export function Button({

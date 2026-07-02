@@ -10,6 +10,7 @@ import { PomodoroSession } from "./features/pomodoro/types";
 import { TodoPanel } from "./features/todos/TodoPanel";
 import { listTodos } from "./features/todos/api";
 import { Todo } from "./features/todos/types";
+import { Toaster } from "./shared/ui/sonner";
 import { TooltipProvider } from "./shared/ui/tooltip";
 
 type ActiveTab = "todos" | "pomodoro" | "notes";
@@ -65,13 +66,13 @@ function App() {
           </div>
         ) : null}
 
-        <nav className="mb-4 flex w-fit shrink-0 rounded-full bg-white/80 p-1 shadow-sm ring-1 ring-border/80">
+        <nav className="mb-4 flex w-fit shrink-0 rounded-3xl bg-white/80 p-1 shadow-sm ring-1 ring-border/80">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
-                className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-bold transition ${
+                className={`inline-flex min-h-10 items-center gap-2 rounded-3xl px-4 text-sm font-bold transition ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -110,6 +111,7 @@ function App() {
           ) : null}
         </section>
       </main>
+      <Toaster />
     </TooltipProvider>
   );
 }

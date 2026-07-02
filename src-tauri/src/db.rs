@@ -22,6 +22,7 @@ pub fn init_db(connection: &Connection) -> Result<(), String> {
                 description TEXT NOT NULL DEFAULT '',
                 status TEXT NOT NULL CHECK(status IN ('backlog', 'todo', 'doing', 'done')),
                 priority TEXT NOT NULL DEFAULT 'normal',
+                tag TEXT NOT NULL DEFAULT '#peronal',
                 due_at TEXT,
                 created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
                 updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
@@ -42,7 +43,38 @@ pub fn init_db(connection: &Connection) -> Result<(), String> {
         .map_err(|error| error.to_string())?;
 
     ensure_column(connection, "todos", "due_at", "TEXT")?;
+    ensure_column(connection, "todos", "tag", "TEXT NOT NULL DEFAULT '#peronal'")?;
+    cleanup_legacy_deleted_todos(connection)?;
     Ok(())
+}
+
+fn cleanup_legacy_deleted_todos(connection: &Connection) -> Result<(), String> {
+    if !column_exists(connection, "todos", "deleted_at")? {
+        return Ok(());
+    }
+
+    connection
+        .execute("DELETE FROM todos WHERE deleted_at IS NOT NULL", [])
+        .map_err(|error| error.to_string())?;
+
+    Ok(())
+}
+
+fn column_exists(connection: &Connection, table: &str, column: &str) -> Result<bool, String> {
+    let mut statement = connection
+        .prepare(&format!("PRAGMA table_info({table})"))
+        .map_err(|error| error.to_string())?;
+    let rows = statement
+        .query_map([], |row| row.get::<_, String>(1))
+        .map_err(|error| error.to_string())?;
+
+    for row in rows {
+        if row.map_err(|error| error.to_string())? == column {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
 }
 
 fn ensure_column(

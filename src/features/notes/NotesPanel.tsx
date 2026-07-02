@@ -47,7 +47,7 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
               {notes.map((note) => (
                 <button
                   className={cn(
-                    "grid min-h-[62px] w-full gap-1 rounded-2xl bg-muted p-3 text-left transition hover:bg-zinc-100",
+                    "grid min-h-[62px] w-full gap-1 rounded-3xl bg-muted p-3 text-left transition hover:bg-zinc-100",
                     note.id === noteState.selectedNoteId &&
                       "bg-white shadow-[inset_0_0_0_1px_hsl(var(--border))]",
                   )}
@@ -73,10 +73,10 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
             placeholder="Tiêu đề ghi chú"
           />
           <div className="flex items-center justify-between gap-2">
-            <div className="flex rounded-full bg-muted p-1">
+            <div className="flex rounded-3xl bg-muted p-1">
               <button
                 className={cn(
-                  "min-h-8 rounded-full px-3 text-sm font-bold text-muted-foreground transition",
+                  "min-h-8 rounded-3xl px-3 text-sm font-bold text-muted-foreground transition",
                   noteState.noteType === "plain" && "bg-white text-foreground shadow-sm",
                 )}
                 onClick={() => noteState.setNoteType("plain")}
@@ -86,7 +86,7 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
               </button>
               <button
                 className={cn(
-                  "inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-sm font-bold text-muted-foreground transition",
+                  "inline-flex min-h-8 items-center gap-1.5 rounded-3xl px-3 text-sm font-bold text-muted-foreground transition",
                   noteState.noteType === "json" && "bg-white text-foreground shadow-sm",
                 )}
                 onClick={() => noteState.setNoteType("json")}

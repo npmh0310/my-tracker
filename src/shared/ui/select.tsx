@@ -8,13 +8,15 @@ export const SelectValue = SelectPrimitive.Value;
 export function SelectTrigger({
   className,
   children,
+  ...props
 }: SelectPrimitive.SelectTriggerProps) {
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        "inline-flex h-11 min-w-32 items-center justify-between gap-2 rounded-full border border-transparent bg-muted px-4 text-sm font-medium outline-none focus:border-border focus:ring-2 focus:ring-ring/20",
+        "inline-flex h-11 min-w-32 items-center justify-between gap-2 rounded-3xl border border-transparent bg-muted px-4 text-sm font-medium outline-none focus:border-border focus:ring-2 focus:ring-ring/20",
         className,
       )}
+      {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
@@ -27,14 +29,20 @@ export function SelectTrigger({
 export function SelectContent({
   className,
   children,
+  position = "popper",
+  sideOffset = 6,
+  ...props
 }: SelectPrimitive.SelectContentProps) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          "z-50 overflow-hidden rounded-2xl border bg-white p-1 shadow-panel",
+          "z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-2xl border bg-white p-1 shadow-panel",
           className,
         )}
+        position={position}
+        sideOffset={sideOffset}
+        {...props}
       >
         <SelectPrimitive.Viewport>{children}</SelectPrimitive.Viewport>
       </SelectPrimitive.Content>

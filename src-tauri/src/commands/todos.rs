@@ -9,13 +9,20 @@ fn validate_todo_status(status: &str) -> Result<(), String> {
     }
 }
 
+fn validate_todo_tag(tag: &str) -> Result<(), String> {
+    match tag {
+        "#madison" | "#peronal" | "#galophy" => Ok(()),
+        _ => Err("tag must be #madison, #peronal, or #galophy".to_string()),
+    }
+}
+
 #[tauri::command]
 pub fn list_todos(db: State<AppDb>) -> Result<Vec<Todo>, String> {
     let connection = db.0.lock().map_err(|error| error.to_string())?;
     let mut statement = connection
         .prepare(
             "
-            SELECT id, title, description, status, priority, due_at, created_at, updated_at
+            SELECT id, title, description, status, priority, tag, due_at, created_at, updated_at
             FROM todos
             ORDER BY
                 CASE status
@@ -38,9 +45,10 @@ pub fn list_todos(db: State<AppDb>) -> Result<Vec<Todo>, String> {
                 description: row.get(2)?,
                 status: row.get(3)?,
                 priority: row.get(4)?,
-                due_at: row.get(5)?,
-                created_at: row.get(6)?,
-                updated_at: row.get(7)?,
+                tag: row.get(5)?,
+                due_at: row.get(6)?,
+                created_at: row.get(7)?,
+                updated_at: row.get(8)?,
             })
         })
         .map_err(|error| error.to_string())?;
@@ -56,17 +64,19 @@ pub fn create_todo(
     description: String,
     status: String,
     priority: String,
+    tag: String,
     due_at: Option<String>,
 ) -> Result<Todo, String> {
     validate_todo_status(&status)?;
+    validate_todo_tag(&tag)?;
     let connection = db.0.lock().map_err(|error| error.to_string())?;
     connection
         .execute(
             "
-            INSERT INTO todos (title, description, status, priority, due_at)
-            VALUES (?1, ?2, ?3, ?4, ?5)
+            INSERT INTO todos (title, description, status, priority, tag, due_at)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6)
             ",
-            params![title.trim(), description.trim(), status, priority, due_at],
+            params![title.trim(), description.trim(), status, priority, tag, due_at],
         )
         .map_err(|error| error.to_string())?;
 
@@ -81,9 +91,11 @@ pub fn update_todo(
     description: String,
     status: String,
     priority: String,
+    tag: String,
     due_at: Option<String>,
 ) -> Result<Todo, String> {
     validate_todo_status(&status)?;
+    validate_todo_tag(&tag)?;
     let connection = db.0.lock().map_err(|error| error.to_string())?;
     connection
         .execute(
@@ -93,15 +105,17 @@ pub fn update_todo(
                 description = ?2,
                 status = ?3,
                 priority = ?4,
-                due_at = ?5,
+                tag = ?5,
+                due_at = ?6,
                 updated_at = datetime('now', 'localtime')
-            WHERE id = ?6
+            WHERE id = ?7
             ",
             params![
                 title.trim(),
                 description.trim(),
                 status,
                 priority,
+                tag,
                 due_at,
                 id
             ],
@@ -142,7 +156,7 @@ fn get_todo(connection: &Connection, id: i64) -> Result<Todo, String> {
     connection
         .query_row(
             "
-            SELECT id, title, description, status, priority, due_at, created_at, updated_at
+            SELECT id, title, description, status, priority, tag, due_at, created_at, updated_at
             FROM todos
             WHERE id = ?1
             ",
@@ -154,9 +168,10 @@ fn get_todo(connection: &Connection, id: i64) -> Result<Todo, String> {
                     description: row.get(2)?,
                     status: row.get(3)?,
                     priority: row.get(4)?,
-                    due_at: row.get(5)?,
-                    created_at: row.get(6)?,
-                    updated_at: row.get(7)?,
+                    tag: row.get(5)?,
+                    due_at: row.get(6)?,
+                    created_at: row.get(7)?,
+                    updated_at: row.get(8)?,
                 })
             },
         )
