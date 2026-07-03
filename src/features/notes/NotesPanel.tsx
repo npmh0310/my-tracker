@@ -205,7 +205,7 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
           `}</style>
           <div
             ref={editorContainerRef}
-            className="relative min-h-0 h-full rounded-2xl border border-input overflow-hidden"
+            className="relative min-h-0 h-full rounded-lg border border-input overflow-hidden"
           >
             <CodeMirror
               ref={editorRef}
@@ -234,15 +234,15 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
           <div className="flex shrink-0 justify-end gap-2">
             <Button
               onClick={() => void noteState.saveNote()}
-              className="h-10 rounded-3xl px-4 text-sm font-semibold"
-              variant="default"
+              className="h-9 rounded-lg px-4 text-sm font-medium bg-foreground text-background hover:bg-foreground/90"
+              variant="ghost"
             >
               Lưu
             </Button>
             <Button
               disabled={!noteState.selectedNoteId}
               onClick={() => void noteState.deleteCurrentNote()}
-              className="h-10 rounded-3xl px-4 text-sm"
+              className="h-9 rounded-lg px-3 text-sm"
               variant="ghost"
             >
               <Trash2 size={16} />
