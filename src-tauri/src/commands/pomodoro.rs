@@ -1,6 +1,6 @@
-use crate::{db::AppDb, models::PomodoroSession};
+use crate::{db::AppDb, models::PomodoroSession, tray};
 use rusqlite::{params, Connection};
-use tauri::State;
+use tauri::{AppHandle, State};
 
 #[tauri::command]
 pub fn create_pomodoro_session(
@@ -70,6 +70,14 @@ pub fn list_today_sessions(db: State<AppDb>) -> Result<Vec<PomodoroSession>, Str
 
     rows.collect::<Result<Vec<_>, _>>()
         .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn set_pomodoro_tray_countdown(
+    app: AppHandle,
+    seconds_left: Option<i64>,
+) -> Result<(), String> {
+    tray::set_pomodoro_countdown(&app, seconds_left).map_err(|error| error.to_string())
 }
 
 fn get_pomodoro_session(connection: &Connection, id: i64) -> Result<PomodoroSession, String> {

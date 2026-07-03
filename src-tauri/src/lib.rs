@@ -5,7 +5,10 @@ mod tray;
 
 use commands::{
     notes::{create_note, delete_note, list_notes, update_note},
-    pomodoro::{complete_pomodoro_session, create_pomodoro_session, list_today_sessions},
+    pomodoro::{
+        complete_pomodoro_session, create_pomodoro_session, list_today_sessions,
+        set_pomodoro_tray_countdown,
+    },
     todos::{create_todo, delete_todo, list_todos, move_todo, update_todo},
 };
 use db::{init_db, AppDb};
@@ -43,7 +46,8 @@ pub fn run() {
             delete_todo,
             create_pomodoro_session,
             complete_pomodoro_session,
-            list_today_sessions
+            list_today_sessions,
+            set_pomodoro_tray_countdown
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

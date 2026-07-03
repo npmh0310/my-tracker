@@ -2,12 +2,11 @@ use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+    Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent,
 };
-#[cfg(not(debug_assertions))]
-use tauri::WindowEvent;
 
 const TRAY_CARD_LABEL: &str = "tray-card";
+const MAIN_TRAY_ID: &str = "main-tray";
 const TRAY_CARD_WIDTH: f64 = 360.0;
 const TRAY_CARD_HEIGHT: f64 = 420.0;
 const TRAY_CARD_MARGIN: f64 = 12.0;
@@ -37,7 +36,7 @@ impl TrayAction {
 pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     let menu = build_menu(app)?;
 
-    TrayIconBuilder::with_id("main-tray")
+    TrayIconBuilder::with_id(MAIN_TRAY_ID)
         .icon(tray_icon())
         .icon_as_template(true)
         .tooltip("Personal Tracker")
@@ -47,6 +46,37 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
         .on_tray_icon_event(|tray, event| handle_tray_icon_event(tray.app_handle(), event))
         .build(app)?;
 
+    Ok(())
+}
+
+pub fn set_pomodoro_countdown(
+    app: &tauri::AppHandle,
+    seconds_left: Option<i64>,
+) -> tauri::Result<()> {
+    if let Some(tray) = app.tray_by_id(MAIN_TRAY_ID) {
+        if let Some(seconds_left) = seconds_left {
+            let seconds_left = seconds_left.max(0);
+            if seconds_left == 0 {
+                reset_tray_icon(&tray)?;
+                return Ok(());
+            }
+
+            let time_label = format_countdown_time(seconds_left);
+            tray.set_icon_with_as_template(Some(pomodoro_tray_icon()), true)?;
+            tray.set_title(Some(time_label.as_str()))?;
+            tray.set_tooltip(Some(format!("Pomodoro {time_label}")))?;
+        } else {
+            reset_tray_icon(&tray)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn reset_tray_icon(tray: &tauri::tray::TrayIcon<tauri::Wry>) -> tauri::Result<()> {
+    tray.set_icon_with_as_template(Some(tray_icon()), true)?;
+    tray.set_title(Some(""))?;
+    tray.set_tooltip(Some("Personal Tracker"))?;
     Ok(())
 }
 
@@ -118,15 +148,12 @@ fn create_tray_card_window(app: &tauri::AppHandle) -> tauri::Result<WebviewWindo
     .focused(false)
     .build()?;
 
-    #[cfg(not(debug_assertions))]
-    {
-        let tray_window = window.clone();
-        window.on_window_event(move |event| {
-            if matches!(event, WindowEvent::Focused(false)) {
-                let _ = tray_window.hide();
-            }
-        });
-    }
+    let tray_window = window.clone();
+    window.on_window_event(move |event| {
+        if matches!(event, WindowEvent::Focused(false)) {
+            let _ = tray_window.hide();
+        }
+    });
 
     Ok(window)
 }
@@ -185,54 +212,90 @@ fn tray_icon() -> Image<'static> {
     const SIZE: u32 = 32;
     let mut rgba = vec![0; (SIZE * SIZE * 4) as usize];
 
-    draw_rounded_rect(&mut rgba, SIZE, 7, 5, 17, 21, 3, 2);
-    draw_line(&mut rgba, SIZE, 12, 6, 12, 25, 2);
-    draw_line(&mut rgba, SIZE, 9, 10, 11, 10, 1);
-    draw_line(&mut rgba, SIZE, 9, 15, 11, 15, 1);
-    draw_line(&mut rgba, SIZE, 9, 20, 11, 20, 1);
-
-    draw_line(&mut rgba, SIZE, 19, 23, 27, 15, 3);
-    draw_line(&mut rgba, SIZE, 24, 12, 28, 16, 2);
-    draw_line(&mut rgba, SIZE, 18, 24, 16, 26, 2);
+    fill_circle(&mut rgba, SIZE, 16, 8, 5);
+    fill_ellipse(&mut rgba, SIZE, 16, 25, 12, 9);
 
     Image::new_owned(rgba, SIZE, SIZE)
 }
 
-fn draw_rounded_rect(
+fn pomodoro_tray_icon() -> Image<'static> {
+    const SIZE: u32 = 32;
+    let mut rgba = vec![0; (SIZE * SIZE * 4) as usize];
+
+    draw_circle_outline(&mut rgba, SIZE, 16, 17, 10, 2);
+    draw_line(&mut rgba, SIZE, 16, 17, 16, 10, 2);
+    draw_line(&mut rgba, SIZE, 16, 17, 22, 17, 2);
+    draw_line(&mut rgba, SIZE, 12, 4, 20, 4, 2);
+    draw_line(&mut rgba, SIZE, 16, 4, 16, 7, 2);
+    draw_line(&mut rgba, SIZE, 8, 9, 6, 7, 2);
+    draw_line(&mut rgba, SIZE, 24, 9, 26, 7, 2);
+
+    Image::new_owned(rgba, SIZE, SIZE)
+}
+
+fn format_countdown_time(seconds_left: i64) -> String {
+    let minutes = seconds_left / 60;
+    let seconds = seconds_left % 60;
+    format!("{minutes}:{seconds:02}")
+}
+
+fn draw_circle_outline(
     rgba: &mut [u8],
     size: u32,
-    x: i32,
-    y: i32,
-    width: i32,
-    height: i32,
+    center_x: i32,
+    center_y: i32,
     radius: i32,
     thickness: i32,
 ) {
-    draw_line(rgba, size, x + radius, y, x + width - radius, y, thickness);
-    draw_line(
-        rgba,
-        size,
-        x + radius,
-        y + height,
-        x + width - radius,
-        y + height,
-        thickness,
-    );
-    draw_line(rgba, size, x, y + radius, x, y + height - radius, thickness);
-    draw_line(
-        rgba,
-        size,
-        x + width,
-        y + radius,
-        x + width,
-        y + height - radius,
-        thickness,
-    );
+    let outer = radius * radius;
+    let inner_radius = (radius - thickness).max(0);
+    let inner = inner_radius * inner_radius;
 
-    draw_point(rgba, size, x + 1, y + 1, thickness);
-    draw_point(rgba, size, x + width - 1, y + 1, thickness);
-    draw_point(rgba, size, x + 1, y + height - 1, thickness);
-    draw_point(rgba, size, x + width - 1, y + height - 1, thickness);
+    for y in (center_y - radius)..=(center_y + radius) {
+        for x in (center_x - radius)..=(center_x + radius) {
+            let distance = (x - center_x).pow(2) + (y - center_y).pow(2);
+            if distance <= outer && distance >= inner {
+                draw_point(rgba, size, x, y, 1);
+            }
+        }
+    }
+}
+
+fn fill_circle(rgba: &mut [u8], size: u32, center_x: i32, center_y: i32, radius: i32) {
+    let radius_squared = radius * radius;
+
+    for y in (center_y - radius)..=(center_y + radius) {
+        for x in (center_x - radius)..=(center_x + radius) {
+            let distance = (x - center_x).pow(2) + (y - center_y).pow(2);
+            if distance <= radius_squared {
+                draw_point(rgba, size, x, y, 1);
+            }
+        }
+    }
+}
+
+fn fill_ellipse(
+    rgba: &mut [u8],
+    size: u32,
+    center_x: i32,
+    center_y: i32,
+    radius_x: i32,
+    radius_y: i32,
+) {
+    let radius_x_squared = radius_x * radius_x;
+    let radius_y_squared = radius_y * radius_y;
+    let threshold = radius_x_squared * radius_y_squared;
+
+    for y in (center_y - radius_y)..=(center_y + radius_y) {
+        for x in (center_x - radius_x)..=(center_x + radius_x) {
+            let dx = x - center_x;
+            let dy = y - center_y;
+            let distance = dx * dx * radius_y_squared + dy * dy * radius_x_squared;
+            if distance <= threshold {
+                draw_point(rgba, size, x, y, 1);
+            }
+        }
+    }
 }
 
 fn draw_line(

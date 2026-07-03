@@ -16,3 +16,7 @@ export function createPomodoroSession(input: {
 export function completePomodoroSession(id: number) {
   return callCommand<PomodoroSession>("complete_pomodoro_session", { id });
 }
+
+export function setPomodoroTrayCountdown(secondsLeft: number | null) {
+  return callCommand<void>("set_pomodoro_tray_countdown", { secondsLeft });
+}
