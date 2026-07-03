@@ -2,6 +2,8 @@ use crate::{db::AppDb, models::Todo};
 use rusqlite::{params, Connection};
 use tauri::State;
 
+const COMPLETED_TODO_RETENTION_DAYS: i64 = 3;
+
 fn validate_todo_status(status: &str) -> Result<(), String> {
     match status {
         "backlog" | "todo" | "doing" | "done" => Ok(()),
@@ -19,6 +21,8 @@ fn validate_todo_tag(tag: &str) -> Result<(), String> {
 #[tauri::command]
 pub fn list_todos(db: State<AppDb>) -> Result<Vec<Todo>, String> {
     let connection = db.0.lock().map_err(|error| error.to_string())?;
+    cleanup_expired_completed_todos(&connection)?;
+
     let mut statement = connection
         .prepare(
             "
@@ -176,4 +180,19 @@ fn get_todo(connection: &Connection, id: i64) -> Result<Todo, String> {
             },
         )
         .map_err(|error| error.to_string())
+}
+
+fn cleanup_expired_completed_todos(connection: &Connection) -> Result<(), String> {
+    connection
+        .execute(
+            "
+            DELETE FROM todos
+            WHERE status = 'done'
+              AND updated_at <= datetime('now', 'localtime', ?1)
+            ",
+            params![format!("-{} days", COMPLETED_TODO_RETENTION_DAYS)],
+        )
+        .map_err(|error| error.to_string())?;
+
+    Ok(())
 }

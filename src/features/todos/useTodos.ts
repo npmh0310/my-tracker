@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { createTodo, deleteTodo, moveTodo } from "./api";
+import { createTodo, deleteTodo, moveTodo, notifyTodosChanged } from "./api";
 import {
   TODO_DEFAULT_TAG,
   Todo,
@@ -85,6 +85,7 @@ export function useTodos(
         status: "todo",
       });
       setTodos((current) => [todo, ...current]);
+      notifyTodosChanged();
       setTaskTitle("");
       setTaskDescription("");
       setTaskPriority("normal");
@@ -104,6 +105,7 @@ export function useTodos(
       setTodos((current) =>
         current.map((item) => (item.id === updated.id ? updated : item)),
       );
+      notifyTodosChanged();
       onError("");
     } catch (error) {
       onError(String(error));
@@ -117,6 +119,7 @@ export function useTodos(
       setTodos((current) =>
         current.map((item) => (item.id === updated.id ? updated : item)),
       );
+      notifyTodosChanged();
       onError("");
 
       if (nextStatus === "done") {
@@ -185,6 +188,7 @@ export function useTodos(
       setTodos((current) =>
         current.map((item) => (item.id === restored.id ? restored : item)),
       );
+      notifyTodosChanged();
       onError("");
     } catch (error) {
       onError(String(error));
@@ -194,6 +198,7 @@ export function useTodos(
   async function permanentlyDeleteTask(id: number) {
     try {
       await deleteTodo(id);
+      notifyTodosChanged();
       onError("");
     } catch (error) {
       onError(String(error));

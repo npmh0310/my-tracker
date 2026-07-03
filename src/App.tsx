@@ -8,7 +8,7 @@ import { PomodoroPanel } from "./features/pomodoro/PomodoroPanel";
 import { listTodaySessions } from "./features/pomodoro/api";
 import { PomodoroSession } from "./features/pomodoro/types";
 import { TodoPanel } from "./features/todos/TodoPanel";
-import { listTodos } from "./features/todos/api";
+import { listTodos, subscribeTodosChanged } from "./features/todos/api";
 import { Todo } from "./features/todos/types";
 import { Toaster } from "./shared/ui/sonner";
 import { TooltipProvider } from "./shared/ui/tooltip";
@@ -36,6 +36,12 @@ function App() {
     void loadDashboard();
   }, []);
 
+  useEffect(() => {
+    return subscribeTodosChanged(() => {
+      void loadTodosOnly();
+    });
+  }, []);
+
   async function loadDashboard() {
     try {
       const [loadedNotes, loadedTodos, loadedSessions] = await Promise.all([
@@ -46,6 +52,15 @@ function App() {
       setNotes(loadedNotes);
       setTodos(loadedTodos);
       setSessions(loadedSessions);
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(String(error));
+    }
+  }
+
+  async function loadTodosOnly() {
+    try {
+      setTodos(await listTodos());
       setErrorMessage("");
     } catch (error) {
       setErrorMessage(String(error));
