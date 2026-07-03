@@ -117,7 +117,7 @@ export function TodoPanel({ todos, setTodos, onError }: TodoPanelProps) {
     <section className="flex h-full min-h-0 overflow-hidden rounded-3xl border border-border/90 bg-[#f7f7f8] shadow-panel w-full">
       <aside className="flex w-[236px] shrink-0 flex-col border-r border-zinc-200/70 bg-[#fbfbfb] p-4">
         <Button
-          className="mb-4 h-10 w-full justify-start rounded-xl bg-transparent px-2 text-sm font-bold text-red-600 shadow-none hover:bg-red-50 hover:text-red-700"
+          className="ml-14 mb-4 h-10 w-full justify-start rounded-xl bg-transparent px-2 text-sm font-bold text-red-600 shadow-none hover:bg-red-50 hover:text-red-700"
           onClick={startQuickTask}
           type="button"
         >
@@ -131,7 +131,9 @@ export function TodoPanel({ todos, setTodos, onError }: TodoPanelProps) {
           <Search size={17} />
           <input
             className="h-full min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-            onChange={(event) => todoState.setSearchQuery(event.currentTarget.value)}
+            onChange={(event) =>
+              todoState.setSearchQuery(event.currentTarget.value)
+            }
             placeholder="Search"
             value={todoState.searchQuery}
           />
@@ -178,10 +180,7 @@ export function TodoPanel({ todos, setTodos, onError }: TodoPanelProps) {
 
           <div className="mt-7 flex min-h-0 flex-1 flex-col bg-white">
             {canCreateTask && selectedTodos.length === 0 ? (
-              <EmptyTaskState
-                onAddTask={startCreatingTask}
-                view={view}
-              />
+              <EmptyTaskState onAddTask={startCreatingTask} view={view} />
             ) : view === "completed" && completedTodos.length === 0 ? (
               <EmptyCompleted />
             ) : !canCreateTask && selectedTodos.length === 0 ? (
@@ -322,9 +321,7 @@ function EmptyTaskState({
 
 function EmptyList({ view }: { view: TodoView }) {
   const message =
-    view === "all"
-      ? "Chưa có task nào."
-      : "Không có task nào cho ngày sau.";
+    view === "all" ? "Chưa có task nào." : "Không có task nào cho ngày sau.";
 
   return (
     <div className="grid min-h-0 flex-1 place-items-center px-6 py-10 text-center">
@@ -561,7 +558,12 @@ function DatePickerSimple({
   const today = new Date();
   const quickDates = [
     { icon: Calendar, label: "Today", date: today, tone: "text-green-600" },
-    { icon: Sun, label: "Tomorrow", date: addDays(today, 1), tone: "text-amber-500" },
+    {
+      icon: Sun,
+      label: "Tomorrow",
+      date: addDays(today, 1),
+      tone: "text-amber-500",
+    },
     {
       icon: Calendar,
       label: "This weekend",
@@ -588,7 +590,11 @@ function DatePickerSimple({
           {date ? format(date, "MMM d") : <span>Date</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[252px] overflow-hidden p-0" sideOffset={5}>
+      <PopoverContent
+        align="start"
+        className="w-[252px] overflow-hidden p-0"
+        sideOffset={5}
+      >
         <div className="border-b border-zinc-100 px-3 py-2">
           <input
             className="h-8 w-full rounded-lg border-0 bg-transparent px-1 text-sm outline-none placeholder:text-zinc-400 focus:bg-zinc-50"
@@ -602,25 +608,25 @@ function DatePickerSimple({
           {quickDates.map((item) => {
             const Icon = item.icon;
             return (
-            <button
-              className="flex h-8 items-center justify-between rounded-3xl px-2 text-left text-sm hover:bg-zinc-50"
-              key={item.label}
-              onClick={() => {
-                onDueAtChange(format(item.date, "yyyy-MM-dd"));
-                setOpen(false);
-              }}
-              type="button"
-            >
-              <span className="inline-flex min-w-0 items-center gap-2 font-semibold text-zinc-800">
-                <Icon className={item.tone} size={15} />
-                <span className="truncate">{item.label}</span>
-              </span>
-              <span className="ml-3 shrink-0 text-xs text-muted-foreground">
-                {item.label === "Next week"
-                  ? format(item.date, "MMM d")
-                  : format(item.date, "EEE")}
-              </span>
-            </button>
+              <button
+                className="flex h-8 items-center justify-between rounded-3xl px-2 text-left text-sm hover:bg-zinc-50"
+                key={item.label}
+                onClick={() => {
+                  onDueAtChange(format(item.date, "yyyy-MM-dd"));
+                  setOpen(false);
+                }}
+                type="button"
+              >
+                <span className="inline-flex min-w-0 items-center gap-2 font-semibold text-zinc-800">
+                  <Icon className={item.tone} size={15} />
+                  <span className="truncate">{item.label}</span>
+                </span>
+                <span className="ml-3 shrink-0 text-xs text-muted-foreground">
+                  {item.label === "Next week"
+                    ? format(item.date, "MMM d")
+                    : format(item.date, "EEE")}
+                </span>
+              </button>
             );
           })}
         </div>

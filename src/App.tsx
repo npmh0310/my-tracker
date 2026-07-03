@@ -69,38 +69,66 @@ function App() {
 
   return (
     <TooltipProvider>
-      <main className="relative flex h-screen max-h-screen flex-col overflow-hidden p-6">
+      <main className="relative flex h-screen max-h-screen flex-col overflow-hidden px-24 py-16 rounded-3xl bg-background">
         {errorMessage ? (
           <div className="mb-4 shrink-0 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">
             {errorMessage}
           </div>
         ) : null}
 
-        <nav className="absolute top-6 left-6 z-10 flex w-fit gap-2 rounded-full bg-white/80 p-1.5 shadow-sm ring-1 ring-border/80">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                aria-label={tab.label}
-                className={`grid h-10 w-10 place-items-center rounded-full transition ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                type="button"
-              >
-                <Icon size={18} />
-              </button>
-            );
-          })}
-        </nav>
+        <div className="absolute top-[42px] left-[64px] z-10 size-20">
+          <div
+            aria-hidden
+            className="absolute -inset-2 rounded-full bg-background [clip-path:polygon(50%_50%,100%_25%,100%_100%,25%_100%)]"
+          />
+          <button
+            className="relative z-10 grid size-20 place-items-center rounded-full bg-white text-foreground shadow-lg ring-1 ring-border transition-all hover:scale-105 active:scale-95 overflow-hidden pointer-events-none"
+            type="button"
+          >
+            {(() => {
+              const currentTab = tabs.find((t) => t.id === activeTab);
+              const Icon = currentTab?.icon;
+              return Icon ? (
+                <div
+                  key={activeTab}
+                  className="flex items-center justify-center animate-in fade-in zoom-in duration-200"
+                >
+                  <Icon size={24} />
+                </div>
+              ) : null;
+            })()}
+          </button>
 
-        <section className="min-h-0 flex-1 overflow-hidden">
+          {/* Left zone - Previous */}
+          <div
+            className="absolute left-0 top-0 h-full w-1/2 cursor-pointer rounded-l-full z-20"
+            onClick={() => {
+              const currentIndex = tabs.findIndex((t) => t.id === activeTab);
+              const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+              setActiveTab(tabs[prevIndex].id);
+            }}
+            aria-label="Previous tab"
+          />
+
+          {/* Right zone - Next */}
+          <div
+            className="absolute right-0 top-0 h-full w-1/2 cursor-pointer rounded-r-full z-20"
+            onClick={() => {
+              const currentIndex = tabs.findIndex((t) => t.id === activeTab);
+              const nextIndex = (currentIndex + 1) % tabs.length;
+              setActiveTab(tabs[nextIndex].id);
+            }}
+            aria-label="Next tab"
+          />
+        </div>
+
+        <section className="min-h-0 flex-1 overflow-hidden rounded-3xl">
           {activeTab === "todos" ? (
-            <TodoPanel onError={setErrorMessage} setTodos={setTodos} todos={todos} />
+            <TodoPanel
+              onError={setErrorMessage}
+              setTodos={setTodos}
+              todos={todos}
+            />
           ) : null}
 
           {activeTab === "pomodoro" ? (

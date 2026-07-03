@@ -25,7 +25,9 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
   useEffect(() => {
     const handleDocumentClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const searchInput = document.querySelector(".cm-search input") as HTMLElement;
+      const searchInput = document.querySelector(
+        ".cm-search input",
+      ) as HTMLElement;
       const searchPanel = document.querySelector(".cm-search") as HTMLElement;
 
       // Nếu click KHÔNG phải trên search input, thì ẩn search
@@ -45,8 +47,12 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
       // Khi bấm Cmd+F, xóa các style ẩn để search hiện lên và focus vào input
       if ((e.metaKey || e.ctrlKey) && e.key === "f") {
         setTimeout(() => {
-          const searchPanel = document.querySelector(".cm-search") as HTMLElement;
-          const searchInput = document.querySelector(".cm-search input") as HTMLInputElement;
+          const searchPanel = document.querySelector(
+            ".cm-search",
+          ) as HTMLElement;
+          const searchInput = document.querySelector(
+            ".cm-search input",
+          ) as HTMLInputElement;
           if (searchPanel) {
             searchPanel.style.cssText = ""; // Clear all styles
           }
@@ -83,23 +89,30 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
 
     // Also listen on editor container for better capture
     if (editorContainerRef.current) {
-      editorContainerRef.current.addEventListener("keydown", handleKeyDown, true);
+      editorContainerRef.current.addEventListener(
+        "keydown",
+        handleKeyDown,
+        true,
+      );
     }
 
     return () => {
       document.removeEventListener("click", handleDocumentClick, true);
       document.removeEventListener("keydown", handleKeyDown, true);
       if (editorContainerRef.current) {
-        editorContainerRef.current.removeEventListener("keydown", handleKeyDown, true);
+        editorContainerRef.current.removeEventListener(
+          "keydown",
+          handleKeyDown,
+          true,
+        );
       }
     };
   }, [noteState]);
 
-
   return (
     <section className="panel flex h-full flex-col overflow-hidden">
       <div className="mb-5 flex shrink-0 items-center justify-between gap-4">
-        <div className="title-row">
+        <div className="title-row ml-12">
           <NotebookPen size={23} />
           <h2 className="text-2xl font-bold leading-none">Ghi chú</h2>
         </div>
@@ -111,7 +124,8 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
           <Button
             className={cn(
               "justify-start px-3 text-xs",
-              noteState.selectedNoteId === null && "bg-white shadow-[inset_0_0_0_1px_hsl(var(--border))]"
+              noteState.selectedNoteId === null &&
+                "bg-white shadow-[inset_0_0_0_1px_hsl(var(--border))]",
             )}
             onClick={noteState.newNote}
             variant="secondary"
@@ -149,7 +163,6 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
         </div>
 
         <div className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] gap-2.5 relative">
-
           <style>{`
             .cm-search {
               background: transparent !important;

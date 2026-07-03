@@ -34,11 +34,7 @@ export function PomodoroPanel({
   setSessions,
   onError,
 }: PomodoroPanelProps) {
-  const pomodoro = usePomodoro(
-    sessions,
-    setSessions,
-    onError,
-  );
+  const pomodoro = usePomodoro(sessions, setSessions, onError);
   const focusSeconds = pomodoroPresets[pomodoro.preset].focusMinutes * 60;
   const progress =
     focusSeconds > 0 ? (focusSeconds - pomodoro.secondsLeft) / focusSeconds : 0;
@@ -47,7 +43,8 @@ export function PomodoroPanel({
   const ringSize = 244;
   const ringCenter = ringSize / 2;
   const ringCircumference = 2 * Math.PI * ringRadius;
-  const ringOffset = ringCircumference * (1 - Math.min(Math.max(progress, 0), 1));
+  const ringOffset =
+    ringCircumference * (1 - Math.min(Math.max(progress, 0), 1));
   const statusText =
     pomodoro.timerState === "running"
       ? "Đang tập trung"
@@ -70,7 +67,7 @@ export function PomodoroPanel({
   return (
     <section className="panel relative flex h-full flex-col overflow-hidden">
       <div className="flex shrink-0 items-center justify-between gap-4">
-        <div className="title-row">
+        <div className="title-row ml-12">
           <CircleDot size={23} />
           <h2 className="text-2xl font-bold leading-none">Pomodoro</h2>
         </div>
