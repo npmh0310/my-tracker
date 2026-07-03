@@ -124,10 +124,10 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
               {notes.map((note) => (
                 <button
                   className={cn(
-                    "flex flex-col min-h-[62px] w-full gap-1.5 rounded-xl p-3 text-left transition",
+                    "flex flex-col min-h-[62px] w-full gap-1.5 rounded-xl p-3 text-left transition border",
                     note.id === noteState.selectedNoteId
-                      ? "bg-blue-50 shadow-[inset_0_0_0_1.5px_#3b82f6]"
-                      : "bg-muted hover:bg-zinc-100",
+                      ? "border-blue-500 bg-white shadow-[inset_0_0_0_1px_#3b82f6]"
+                      : "border-border bg-white hover:border-zinc-300",
                   )}
                   key={note.id}
                   onClick={() => noteState.setSelectedNoteId(note.id)}
