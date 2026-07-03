@@ -106,7 +106,7 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
         <Badge>{noteState.wordCount} từ</Badge>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[160px_minmax(0,1fr)] gap-4">
+      <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)] gap-4">
         <div className="flex min-h-0 min-w-0 flex-col gap-2">
           <Button
             className={cn(
