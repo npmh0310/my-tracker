@@ -69,20 +69,21 @@ function App() {
 
   return (
     <TooltipProvider>
-      <main className="flex h-screen max-h-screen flex-col overflow-hidden p-6">
+      <main className="relative flex h-screen max-h-screen flex-col overflow-hidden p-6">
         {errorMessage ? (
           <div className="mb-4 shrink-0 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">
             {errorMessage}
           </div>
         ) : null}
 
-        <nav className="mb-4 flex w-fit shrink-0 rounded-3xl bg-white/80 p-1 shadow-sm ring-1 ring-border/80">
+        <nav className="absolute top-6 left-6 z-10 flex w-fit gap-2 rounded-full bg-white/80 p-1.5 shadow-sm ring-1 ring-border/80">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
-                className={`inline-flex min-h-10 items-center gap-2 rounded-3xl px-4 text-sm font-bold transition ${
+                aria-label={tab.label}
+                className={`grid h-10 w-10 place-items-center rounded-full transition ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -91,8 +92,7 @@ function App() {
                 onClick={() => setActiveTab(tab.id)}
                 type="button"
               >
-                <Icon size={17} />
-                {tab.label}
+                <Icon size={18} />
               </button>
             );
           })}
