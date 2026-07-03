@@ -124,21 +124,24 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
               {notes.map((note) => (
                 <button
                   className={cn(
-                    "grid min-h-[62px] w-full gap-1 rounded-xl bg-muted p-3 text-left transition hover:bg-zinc-100",
-                    note.id === noteState.selectedNoteId &&
-                      "bg-white shadow-[inset_0_0_0_1px_hsl(var(--border))]",
+                    "flex flex-col min-h-[62px] w-full gap-1.5 rounded-xl p-3 text-left transition",
+                    note.id === noteState.selectedNoteId
+                      ? "bg-blue-50 shadow-[inset_0_0_0_1.5px_#3b82f6]"
+                      : "bg-muted hover:bg-zinc-100",
                   )}
                   key={note.id}
                   onClick={() => noteState.setSelectedNoteId(note.id)}
                   type="button"
                 >
                   <strong className="truncate text-xs">{note.title}</strong>
-                  <span className="line-clamp-1 text-[11px] font-bold text-muted-foreground">
-                    {note.content || "Empty note"}
-                  </span>
-                  <span className="line-clamp-1 text-[11px] font-bold text-muted-foreground">
-                    {format(new Date(note.created_at), "dd/M/yy")}
-                  </span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="truncate text-[11px] text-muted-foreground flex-1">
+                      {note.content || "Empty note"}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground shrink-0">
+                      {format(new Date(note.created_at), "dd/M/yy")}
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>
