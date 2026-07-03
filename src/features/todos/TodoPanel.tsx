@@ -373,7 +373,7 @@ function AllTasksByTag({
                 </span>
               </div>
 
-              <div className="rounded-3xl border border-zinc-100 px-3">
+              <div className="overflow-hidden rounded-3xl border border-zinc-100">
                 {tagTodos.map((todo) => (
                   <TaskRow
                     completed={todo.status === "done"}
@@ -691,7 +691,7 @@ function TaskRow({
   todo: Todo;
 }) {
   return (
-    <div className="group flex min-h-[64px] items-start gap-3 border-b border-zinc-100 px-2 py-3 transition hover:bg-zinc-50/80 last:border-b-0">
+    <div className="group flex min-h-[64px] items-start gap-3 border-b border-zinc-100 px-4 py-3 transition hover:bg-zinc-50/80 last:border-b-0">
       <button
         className={cn(
           "mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-3xl border-2 transition",

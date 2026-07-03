@@ -1,7 +1,7 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { linter, lintGutter } from "@codemirror/lint";
-import { FileJson, Plus, SquarePen } from "lucide-react";
+import { FileJson, NotebookPen, Plus } from "lucide-react";
 import { Badge } from "../../shared/ui/badge";
 import { Button } from "../../shared/ui/button";
 import { Input } from "../../shared/ui/input";
@@ -26,7 +26,7 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
     <section className="panel flex h-full flex-col overflow-hidden">
       <div className="mb-5 flex shrink-0 items-center justify-between gap-4">
         <div className="title-row">
-          <SquarePen size={23} />
+          <NotebookPen size={23} />
           <h2 className="text-2xl font-bold leading-none">Ghi chú</h2>
         </div>
         <Badge>{noteState.wordCount} từ</Badge>
