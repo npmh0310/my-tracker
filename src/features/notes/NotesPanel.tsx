@@ -1,12 +1,12 @@
+import { NotebookPen, Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { format } from "date-fns";
 import CodeMirror from "@uiw/react-codemirror";
-import { json, jsonParseLinter } from "@codemirror/lang-json";
-import { linter, lintGutter } from "@codemirror/lint";
-import { FileJson, NotebookPen, Plus } from "lucide-react";
+import { json } from "@codemirror/lang-json";
+import { search } from "@codemirror/search";
 import { Badge } from "../../shared/ui/badge";
 import { Button } from "../../shared/ui/button";
-import { Input } from "../../shared/ui/input";
 import { ScrollArea } from "../../shared/ui/scroll-area";
-import { Textarea } from "../../shared/ui/textarea";
 import { cn } from "../../shared/lib/utils";
 import { useNotes } from "./useNotes";
 import { Note } from "./types";
@@ -17,10 +17,84 @@ type NotesPanelProps = {
   onError: (message: string) => void;
 };
 
-const jsonExtensions = [json(), lintGutter(), linter(jsonParseLinter())];
-
 export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
   const noteState = useNotes(notes, setNotes, onError);
+  const editorRef = useRef<any>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const searchInput = document.querySelector(".cm-search input") as HTMLElement;
+      const searchPanel = document.querySelector(".cm-search") as HTMLElement;
+
+      // Nếu click KHÔNG phải trên search input, thì ẩn search
+      if (searchInput && searchPanel && !searchInput.contains(target)) {
+        searchPanel.style.cssText = `
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          height: 0 !important;
+          width: 0 !important;
+          pointer-events: none !important;
+        `;
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Khi bấm Cmd+F, xóa các style ẩn để search hiện lên và focus vào input
+      if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+        setTimeout(() => {
+          const searchPanel = document.querySelector(".cm-search") as HTMLElement;
+          const searchInput = document.querySelector(".cm-search input") as HTMLInputElement;
+          if (searchPanel) {
+            searchPanel.style.cssText = ""; // Clear all styles
+          }
+          if (searchInput) {
+            searchInput.focus(); // Focus vào search input
+          }
+        }, 10);
+      }
+
+      // Cmd+E để Format
+      if ((e.metaKey || e.ctrlKey) && e.key === "e") {
+        e.preventDefault();
+        if (editorRef.current?.view) {
+          const view = editorRef.current.view;
+          const content = view.state.doc.toString();
+          try {
+            const formatted = JSON.stringify(JSON.parse(content), null, 2);
+            view.dispatch({
+              changes: {
+                from: 0,
+                to: view.state.doc.length,
+                insert: formatted,
+              },
+            });
+          } catch (error) {
+            console.error("Format error:", error);
+          }
+        }
+      }
+    };
+
+    document.addEventListener("click", handleDocumentClick, true);
+    document.addEventListener("keydown", handleKeyDown, true);
+
+    // Also listen on editor container for better capture
+    if (editorContainerRef.current) {
+      editorContainerRef.current.addEventListener("keydown", handleKeyDown, true);
+    }
+
+    return () => {
+      document.removeEventListener("click", handleDocumentClick, true);
+      document.removeEventListener("keydown", handleKeyDown, true);
+      if (editorContainerRef.current) {
+        editorContainerRef.current.removeEventListener("keydown", handleKeyDown, true);
+      }
+    };
+  }, [noteState]);
+
 
   return (
     <section className="panel flex h-full flex-col overflow-hidden">
@@ -35,11 +109,14 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
       <div className="grid min-h-0 flex-1 grid-cols-[160px_minmax(0,1fr)] gap-4">
         <div className="flex min-h-0 min-w-0 flex-col gap-2">
           <Button
-            className="justify-start px-3"
+            className={cn(
+              "justify-start px-3 text-xs",
+              noteState.selectedNoteId === null && "bg-white shadow-[inset_0_0_0_1px_hsl(var(--border))]"
+            )}
             onClick={noteState.newNote}
             variant="secondary"
           >
-            <Plus size={16} />
+            <Plus size={14} />
             Note mới
           </Button>
           <ScrollArea className="min-h-0 flex-1">
@@ -47,7 +124,7 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
               {notes.map((note) => (
                 <button
                   className={cn(
-                    "grid min-h-[62px] w-full gap-1 rounded-3xl bg-muted p-3 text-left transition hover:bg-zinc-100",
+                    "grid min-h-[62px] w-full gap-1 rounded-xl bg-muted p-3 text-left transition hover:bg-zinc-100",
                     note.id === noteState.selectedNoteId &&
                       "bg-white shadow-[inset_0_0_0_1px_hsl(var(--border))]",
                   )}
@@ -55,9 +132,12 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
                   onClick={() => noteState.setSelectedNoteId(note.id)}
                   type="button"
                 >
-                  <strong className="truncate text-sm">{note.title}</strong>
-                  <span className="text-[11px] font-extrabold text-muted-foreground">
-                    {note.content_type.toUpperCase()}
+                  <strong className="truncate text-xs">{note.title}</strong>
+                  <span className="line-clamp-1 text-[11px] font-bold text-muted-foreground">
+                    {note.content || "Empty note"}
+                  </span>
+                  <span className="line-clamp-1 text-[11px] font-bold text-muted-foreground">
+                    {format(new Date(note.created_at), "dd/M/yy")}
                   </span>
                 </button>
               ))}
@@ -65,69 +145,82 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
           </ScrollArea>
         </div>
 
-        <div className="grid min-h-0 min-w-0 grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] gap-2.5">
-          <Input
-            className="rounded-2xl font-bold"
-            value={noteState.noteTitle}
-            onChange={(event) => noteState.setNoteTitle(event.currentTarget.value)}
-            placeholder="Tiêu đề ghi chú"
-          />
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex rounded-3xl bg-muted p-1">
-              <button
-                className={cn(
-                  "min-h-8 rounded-3xl px-3 text-sm font-bold text-muted-foreground transition",
-                  noteState.noteType === "plain" && "bg-white text-foreground shadow-sm",
-                )}
-                onClick={() => noteState.setNoteType("plain")}
-                type="button"
-              >
-                Plain
-              </button>
-              <button
-                className={cn(
-                  "inline-flex min-h-8 items-center gap-1.5 rounded-3xl px-3 text-sm font-bold text-muted-foreground transition",
-                  noteState.noteType === "json" && "bg-white text-foreground shadow-sm",
-                )}
-                onClick={() => noteState.setNoteType("json")}
-                type="button"
-              >
-                <FileJson size={15} />
-                JSON
-              </button>
-            </div>
-            {noteState.noteType === "json" ? (
-              <Button onClick={noteState.formatJson} variant="secondary">
-                Format
-              </Button>
-            ) : null}
-          </div>
+        <div className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] gap-2.5 relative">
 
-          {noteState.noteType === "json" ? (
+          <style>{`
+            .cm-search {
+              background: transparent !important;
+              border: none !important;
+              padding: 0 !important;
+              position: absolute !important;
+              top: 8px !important;
+              right: 8px !important;
+              width: 280px !important;
+              display: flex !important;
+              align-items: center !important;
+              flex-direction: row !important;
+              gap: 6px !important;
+            }
+            .cm-search label {
+              display: none !important;
+            }
+            .cm-search > button {
+              display: none !important;
+            }
+            .cm-search > input:first-of-type {
+              display: block !important;
+              border: 1px solid hsl(var(--border)) !important;
+              background: hsl(var(--muted)) !important;
+              border-radius: 24px !important;
+              padding: 8px 14px !important;
+              font-size: 13px !important;
+              color: hsl(var(--foreground)) !important;
+              width: 100% !important;
+              flex: 1 !important;
+            }
+            .cm-search > input:first-of-type::placeholder {
+              content: "Search" !important;
+              color: hsl(var(--muted-foreground)) !important;
+            }
+            .cm-search > input:last-of-type {
+              display: none !important;
+            }
+            .cm-search button[aria-label="close"] {
+              display: none !important;
+            }
+            .cm-completion {
+              display: none !important;
+            }
+            .cm-completionInfo {
+              display: none !important;
+            }
+            .cm-completionLabel {
+              display: none !important;
+            }
+            .cm-searchMatch { background: #fef08a !important; }
+            .cm-searchMatch-selected { background: #fcd34d !important; }
+          `}</style>
+          <div
+            ref={editorContainerRef}
+            className="relative min-h-0 h-full rounded-2xl border border-input overflow-hidden"
+          >
             <CodeMirror
-              basicSetup={{
-                bracketMatching: true,
-                closeBrackets: true,
-                foldGutter: true,
-                highlightActiveLine: true,
-                lineNumbers: true,
-              }}
-              extensions={jsonExtensions}
+              ref={editorRef}
+              value={noteState.noteContent}
+              onChange={(value) => noteState.setNoteContent(value)}
+              extensions={[json(), search({ top: true })]}
+              theme="light"
               height="100%"
-              onChange={noteState.setNoteContent}
-              placeholder={'{\n  "idea": "Personal tracker"\n}'}
-              value={noteState.noteContent}
+              className="min-h-0 h-full"
+              basicSetup={{
+                lineNumbers: false,
+                foldGutter: false,
+                drawSelection: true,
+                searchKeymap: true,
+              }}
+              style={{ fontSize: "14px" }}
             />
-          ) : (
-            <Textarea
-              className="min-h-0"
-              value={noteState.noteContent}
-              onChange={(event) =>
-                noteState.setNoteContent(event.currentTarget.value)
-              }
-              placeholder="Viết ghi chú..."
-            />
-          )}
+          </div>
 
           {noteState.jsonError ? (
             <p className="rounded-2xl bg-rose-50 p-3 text-sm leading-5 text-rose-700">
@@ -135,14 +228,21 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
             </p>
           ) : null}
 
-          <div className="flex shrink-0 justify-end gap-2.5">
-            <Button onClick={() => void noteState.saveNote()}>Lưu note</Button>
+          <div className="flex shrink-0 justify-end gap-2">
+            <Button
+              onClick={() => void noteState.saveNote()}
+              className="h-10 rounded-3xl px-4 text-sm font-semibold"
+              variant="default"
+            >
+              Lưu
+            </Button>
             <Button
               disabled={!noteState.selectedNoteId}
               onClick={() => void noteState.deleteCurrentNote()}
-              variant="destructive"
+              className="h-10 rounded-3xl px-4 text-sm"
+              variant="ghost"
             >
-              Xóa
+              <Trash2 size={16} />
             </Button>
           </div>
         </div>
