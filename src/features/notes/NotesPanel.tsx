@@ -126,7 +126,7 @@ export function NotesPanel({ notes, setNotes, onError }: NotesPanelProps) {
                   className={cn(
                     "flex flex-col min-h-[62px] w-full gap-1.5 rounded-xl p-3 text-left transition border",
                     note.id === noteState.selectedNoteId
-                      ? "border-blue-500 bg-white shadow-[inset_0_0_0_1px_#3b82f6]"
+                      ? "border-gray-300 bg-gray-100"
                       : "border-border bg-white hover:border-zinc-300",
                   )}
                   key={note.id}
