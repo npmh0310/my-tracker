@@ -1,6 +1,7 @@
 mod commands;
 mod db;
 mod models;
+mod tray;
 
 use commands::{
     notes::{create_note, delete_note, list_notes, update_note},
@@ -27,6 +28,7 @@ pub fn run() {
             let connection = Connection::open(db_path).map_err(|error| error.to_string())?;
             init_db(&connection)?;
             app.manage(AppDb(std::sync::Mutex::new(connection)));
+            tray::setup(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

@@ -27,6 +27,14 @@
     @apply h-screen max-h-screen overflow-hidden;
   }
 
+  html[data-view="tray-card"],
+  html[data-view="tray-card"] body,
+  html[data-view="tray-card"] #root {
+    background: transparent !important;
+    border-radius: 28px;
+    overflow: hidden;
+  }
+
   body {
     @apply m-0 bg-background text-foreground antialiased;
     font-family:
