@@ -134,7 +134,7 @@ fn toggle_tray_card(
             let distance_y = (current_position.y - next_position.y).abs();
 
             if distance_x < 8 && distance_y < 8 {
-                window.close()?;
+                window.hide()?;
                 return Ok(());
             }
         }
@@ -170,7 +170,7 @@ fn create_tray_card_window(app: &tauri::AppHandle) -> tauri::Result<WebviewWindo
     let tray_window = window.clone();
     window.on_window_event(move |event| {
         if matches!(event, WindowEvent::Focused(false)) {
-            let _ = tray_window.close();
+            let _ = tray_window.hide();
         }
     });
 

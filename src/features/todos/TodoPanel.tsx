@@ -76,7 +76,7 @@ export function TodoPanel({ todos, setTodos, onError }: TodoPanelProps) {
   const completedTodos = todoState.visibleTodos.filter(
     (todo) => todo.status === "done",
   );
-  const allTodos = todoState.visibleTodos;
+  const allTodos = activeTodos;
   const selectedTodos = {
     today: todayTodos,
     upcoming: upcomingTodos,
@@ -348,10 +348,6 @@ function AllTasksByTag({
           const tagTodos = todos.filter((todo) => todo.tag === tag);
           if (tagTodos.length === 0) return null;
 
-          const completedCount = tagTodos.filter(
-            (todo) => todo.status === "done",
-          ).length;
-
           return (
             <section className="min-w-0" key={tag}>
               <div className="mb-1.5 flex items-center gap-2 px-1">
@@ -366,7 +362,6 @@ function AllTasksByTag({
                 </span>
                 <span className="text-xs font-medium text-muted-foreground">
                   {tagTodos.length} task
-                  {completedCount ? `, ${completedCount} done` : ""}
                 </span>
               </div>
 

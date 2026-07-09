@@ -2,7 +2,7 @@ use crate::{db::AppDb, models::Todo};
 use rusqlite::{params, Connection};
 use tauri::State;
 
-const COMPLETED_TODO_RETENTION_DAYS: i64 = 3;
+const COMPLETED_TODO_RETENTION_DAYS: i64 = 30;
 
 fn validate_todo_status(status: &str) -> Result<(), String> {
     match status {
