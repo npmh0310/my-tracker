@@ -33,9 +33,9 @@ const tabs: Array<{
   label: string;
   icon: ComponentType<{ size?: number }>;
 }> = [
+  { id: "notes", label: "Ghi chú", icon: SquarePen },
   { id: "todos", label: "Todo", icon: CheckSquare },
   { id: "pomodoro", label: "Pomodoro", icon: Clock3 },
-  { id: "notes", label: "Ghi chú", icon: SquarePen },
 ];
 
 function App() {

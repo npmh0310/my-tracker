@@ -7,9 +7,9 @@ const tabs: Array<{
   label: string;
   icon: ComponentType<{ className?: string; size?: number; strokeWidth?: number }>;
 }> = [
+  { id: "notes", label: "Notes", icon: NotebookPen },
   { id: "todo", label: "Todo", icon: CheckSquare },
   { id: "pomodoro", label: "Pomodoro", icon: Clock3 },
-  { id: "notes", label: "Notes", icon: NotebookPen },
 ];
 
 type TrayCardTabsProps = {
