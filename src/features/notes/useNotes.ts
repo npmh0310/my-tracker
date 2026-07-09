@@ -1,13 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { z } from "zod";
 import { formatJsonContent } from "../../shared/lib/json";
 import { createNote, deleteNote, updateNote } from "./api";
 import { Note } from "./types";
-
-const noteSchema = z.object({
-  title: z.string(),
-  content: z.string(),
-});
 
 export function useNotes(
   notes: Note[],
@@ -51,24 +45,19 @@ export function useNotes(
   }
 
   async function saveNote() {
-    const parsed = noteSchema.safeParse({
+    const noteInput = {
       title: noteTitle,
       content: noteContent,
-    });
-
-    if (!parsed.success) {
-      setJsonError(parsed.error.issues[0]?.message ?? "Note chưa hợp lệ.");
-      return;
-    }
+    };
 
     try {
       const saved = selectedNoteId
         ? await updateNote({
-            ...parsed.data,
+            ...noteInput,
             contentType: "plain",
             id: selectedNoteId,
           })
-        : await createNote({ ...parsed.data, contentType: "plain" });
+        : await createNote({ ...noteInput, contentType: "plain" });
 
       setNotes((current) => {
         const exists = current.some((note) => note.id === saved.id);

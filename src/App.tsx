@@ -1,19 +1,32 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { ComponentType } from "react";
 import { CheckSquare, Clock3, SquarePen } from "lucide-react";
-import { NotesPanel } from "./features/notes/NotesPanel";
 import { listNotes } from "./features/notes/api";
 import { Note } from "./features/notes/types";
-import { PomodoroPanel } from "./features/pomodoro/PomodoroPanel";
 import { listTodaySessions } from "./features/pomodoro/api";
 import { PomodoroSession } from "./features/pomodoro/types";
-import { TodoPanel } from "./features/todos/TodoPanel";
 import { listTodos, subscribeTodosChanged } from "./features/todos/api";
 import { Todo } from "./features/todos/types";
 import { Toaster } from "./shared/ui/sonner";
 import { TooltipProvider } from "./shared/ui/tooltip";
 
 type ActiveTab = "todos" | "pomodoro" | "notes";
+
+const NotesPanel = lazy(() =>
+  import("./features/notes/NotesPanel").then((module) => ({
+    default: module.NotesPanel,
+  })),
+);
+const PomodoroPanel = lazy(() =>
+  import("./features/pomodoro/PomodoroPanel").then((module) => ({
+    default: module.PomodoroPanel,
+  })),
+);
+const TodoPanel = lazy(() =>
+  import("./features/todos/TodoPanel").then((module) => ({
+    default: module.TodoPanel,
+  })),
+);
 
 const tabs: Array<{
   id: ActiveTab;
@@ -31,27 +44,47 @@ function App() {
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [activeTab, setActiveTab] = useState<ActiveTab>("todos");
+  const [loadedTabs, setLoadedTabs] = useState<Record<ActiveTab, boolean>>({
+    todos: false,
+    pomodoro: false,
+    notes: false,
+  });
 
   useEffect(() => {
-    void loadDashboard();
-  }, []);
+    void loadActiveTab(activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      if (activeTab === "notes") {
+        void loadNotesOnly();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [activeTab]);
 
   useEffect(() => {
     return subscribeTodosChanged(() => {
-      void loadTodosOnly();
+      if (loadedTabs.todos) {
+        void loadTodosOnly();
+      }
     });
-  }, []);
+  }, [loadedTabs.todos]);
 
-  async function loadDashboard() {
+  async function loadActiveTab(tab: ActiveTab) {
+    if (loadedTabs[tab]) return;
+
     try {
-      const [loadedNotes, loadedTodos, loadedSessions] = await Promise.all([
-        listNotes(),
-        listTodos(),
-        listTodaySessions(),
-      ]);
-      setNotes(loadedNotes);
-      setTodos(loadedTodos);
-      setSessions(loadedSessions);
+      if (tab === "todos") {
+        setTodos(await listTodos());
+      } else if (tab === "pomodoro") {
+        setSessions(await listTodaySessions());
+      } else {
+        setNotes(await listNotes());
+      }
+      setLoadedTabs((current) => ({ ...current, [tab]: true }));
       setErrorMessage("");
     } catch (error) {
       setErrorMessage(String(error));
@@ -61,6 +94,15 @@ function App() {
   async function loadTodosOnly() {
     try {
       setTodos(await listTodos());
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(String(error));
+    }
+  }
+
+  async function loadNotesOnly() {
+    try {
+      setNotes(await listNotes());
       setErrorMessage("");
     } catch (error) {
       setErrorMessage(String(error));
@@ -123,29 +165,37 @@ function App() {
         </div>
 
         <section className="min-h-0 flex-1 overflow-hidden rounded-3xl">
-          {activeTab === "todos" ? (
-            <TodoPanel
-              onError={setErrorMessage}
-              setTodos={setTodos}
-              todos={todos}
-            />
-          ) : null}
+          <Suspense
+            fallback={
+              <div className="grid h-full place-items-center rounded-3xl bg-white text-sm font-semibold text-muted-foreground">
+                Loading...
+              </div>
+            }
+          >
+            {activeTab === "todos" ? (
+              <TodoPanel
+                onError={setErrorMessage}
+                setTodos={setTodos}
+                todos={todos}
+              />
+            ) : null}
 
-          {activeTab === "pomodoro" ? (
-            <PomodoroPanel
-              onError={setErrorMessage}
-              sessions={sessions}
-              setSessions={setSessions}
-            />
-          ) : null}
+            {activeTab === "pomodoro" ? (
+              <PomodoroPanel
+                onError={setErrorMessage}
+                sessions={sessions}
+                setSessions={setSessions}
+              />
+            ) : null}
 
-          {activeTab === "notes" ? (
-            <NotesPanel
-              notes={notes}
-              onError={setErrorMessage}
-              setNotes={setNotes}
-            />
-          ) : null}
+            {activeTab === "notes" ? (
+              <NotesPanel
+                notes={notes}
+                onError={setErrorMessage}
+                setNotes={setNotes}
+              />
+            ) : null}
+          </Suspense>
         </section>
       </main>
       <Toaster />

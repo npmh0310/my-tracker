@@ -1,6 +1,5 @@
 import { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 import { createTodo, deleteTodo, moveTodo, notifyTodosChanged } from "./api";
 import {
   TODO_DEFAULT_TAG,
@@ -10,14 +9,6 @@ import {
   TodoTag,
   todoTags,
 } from "./types";
-
-const taskSchema = z.object({
-  title: z.string().trim().min(1, "Nhập tên task trước khi thêm."),
-  description: z.string(),
-  priority: z.enum(["low", "normal", "high"]),
-  tag: z.enum(todoTags),
-  dueAt: z.string().nullable(),
-});
 
 const completedToastStyle = {
   background: "#ecfdf5",
@@ -64,24 +55,26 @@ export function useTodos(
 
   async function createTask(event: FormEvent) {
     event.preventDefault();
-    const parsed = taskSchema.safeParse({
-      title: taskTitle,
-      description: taskDescription,
-      priority: taskPriority,
-      tag: taskTag,
-      dueAt: taskDueAt || null,
-    });
-    if (!parsed.success) {
-      return;
+    const title = taskTitle.trim();
+    const priority = isTodoPriority(taskPriority) ? taskPriority : "normal";
+    const tag = isTodoTag(taskTag) ? taskTag : TODO_DEFAULT_TAG;
+    const dueAt = taskDueAt || null;
+
+    if (!title) {
+      return false;
     }
+
+    const taskInput = {
+      title,
+      description: taskDescription,
+      priority,
+      tag,
+      dueAt,
+    };
 
     try {
       const todo = await createTodo({
-        title: parsed.data.title,
-        description: parsed.data.description,
-        priority: parsed.data.priority,
-        tag: parsed.data.tag,
-        dueAt: parsed.data.dueAt,
+        ...taskInput,
         status: "todo",
       });
       setTodos((current) => [todo, ...current]);
@@ -224,4 +217,12 @@ export function useTodos(
     toggleCompleted,
     removeTask,
   };
+}
+
+function isTodoPriority(value: string): value is TodoPriority {
+  return value === "low" || value === "normal" || value === "high";
+}
+
+function isTodoTag(value: string): value is TodoTag {
+  return todoTags.includes(value as TodoTag);
 }

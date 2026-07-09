@@ -2,13 +2,13 @@ use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent,
+    Manager, PhysicalPosition, Rect, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent,
 };
 
 const TRAY_CARD_LABEL: &str = "tray-card";
 const MAIN_TRAY_ID: &str = "main-tray";
-const TRAY_CARD_WIDTH: f64 = 360.0;
-const TRAY_CARD_HEIGHT: f64 = 420.0;
+const TRAY_CARD_WIDTH: f64 = 450.0;
+const TRAY_CARD_HEIGHT: f64 = 600.0;
 const TRAY_CARD_MARGIN: f64 = 12.0;
 
 enum TrayAction {
@@ -104,24 +104,43 @@ fn handle_menu_event(app: &tauri::AppHandle, id: &str) {
 fn handle_tray_icon_event(app: &tauri::AppHandle, event: TrayIconEvent) {
     if let TrayIconEvent::Click {
         position,
+        rect,
         button,
         button_state,
         ..
     } = event
     {
         if button == MouseButton::Left && button_state == MouseButtonState::Up {
-            let _ = toggle_tray_card(app, position);
+            let _ = toggle_tray_card(app, position, rect);
         }
     }
 }
 
-fn toggle_tray_card(app: &tauri::AppHandle, click_position: PhysicalPosition<f64>) -> tauri::Result<()> {
+fn toggle_tray_card(
+    app: &tauri::AppHandle,
+    click_position: PhysicalPosition<f64>,
+    tray_rect: Rect,
+) -> tauri::Result<()> {
     let window = match app.get_webview_window(TRAY_CARD_LABEL) {
         Some(window) => window,
         None => create_tray_card_window(app)?,
     };
+    let anchor_position = tray_anchor_position(app, click_position, tray_rect)?;
+    let next_position = tray_card_position(app, anchor_position)?;
 
-    position_tray_card(app, &window, click_position)?;
+    if window.is_visible()? {
+        if let Ok(current_position) = window.outer_position() {
+            let distance_x = (current_position.x - next_position.x).abs();
+            let distance_y = (current_position.y - next_position.y).abs();
+
+            if distance_x < 8 && distance_y < 8 {
+                window.close()?;
+                return Ok(());
+            }
+        }
+    }
+
+    window.set_position(next_position)?;
 
     window.show()?;
     window.set_focus()?;
@@ -151,53 +170,93 @@ fn create_tray_card_window(app: &tauri::AppHandle) -> tauri::Result<WebviewWindo
     let tray_window = window.clone();
     window.on_window_event(move |event| {
         if matches!(event, WindowEvent::Focused(false)) {
-            let _ = tray_window.hide();
+            let _ = tray_window.close();
         }
     });
 
     Ok(window)
 }
 
-fn position_tray_card(
+fn tray_card_position(
     app: &tauri::AppHandle,
-    window: &WebviewWindow,
-    click_position: PhysicalPosition<f64>,
-) -> tauri::Result<()> {
+    anchor_position: PhysicalPosition<f64>,
+) -> tauri::Result<PhysicalPosition<i32>> {
     let monitor = app
         .available_monitors()?
         .into_iter()
         .find(|monitor| {
             let position = monitor.position();
             let size = monitor.size();
-            click_position.x >= position.x as f64
-                && click_position.x <= (position.x + size.width as i32) as f64
-                && click_position.y >= position.y as f64
-                && click_position.y <= (position.y + size.height as i32) as f64
+            anchor_position.x >= position.x as f64
+                && anchor_position.x <= (position.x + size.width as i32) as f64
+                && anchor_position.y >= position.y as f64
+                && anchor_position.y <= (position.y + size.height as i32) as f64
         })
         .or(app.primary_monitor()?);
 
     let (x, y) = if let Some(monitor) = monitor {
         let position = monitor.position();
         let size = monitor.size();
+        let card_width = TRAY_CARD_WIDTH;
+        let card_height = TRAY_CARD_HEIGHT;
+        let card_margin = TRAY_CARD_MARGIN;
         let right_edge = (position.x + size.width as i32) as f64;
         let top_edge = position.y as f64;
-        let x = (click_position.x - TRAY_CARD_WIDTH + 24.0)
-            .max(position.x as f64 + TRAY_CARD_MARGIN)
-            .min(right_edge - TRAY_CARD_WIDTH - TRAY_CARD_MARGIN);
-        let y = (click_position.y + TRAY_CARD_MARGIN)
-            .max(top_edge + TRAY_CARD_MARGIN)
-            .min((position.y + size.height as i32) as f64 - TRAY_CARD_HEIGHT - TRAY_CARD_MARGIN);
+        let bottom_edge = (position.y + size.height as i32) as f64;
+        let min_x = position.x as f64 + card_margin;
+        let min_y = top_edge + card_margin;
+        let max_x = (right_edge - card_width - card_margin).max(min_x);
+        let max_y = (bottom_edge - card_height - card_margin).max(min_y);
+        let x = (anchor_position.x - card_width + 24.0).clamp(min_x, max_x);
+        let y = (anchor_position.y + card_margin).clamp(min_y, max_y);
 
         (x, y)
     } else {
         (
-            (click_position.x - TRAY_CARD_WIDTH + 24.0).max(TRAY_CARD_MARGIN),
-            (click_position.y + TRAY_CARD_MARGIN).max(TRAY_CARD_MARGIN),
+            (anchor_position.x - TRAY_CARD_WIDTH + 24.0).max(TRAY_CARD_MARGIN),
+            (anchor_position.y + TRAY_CARD_MARGIN).max(TRAY_CARD_MARGIN),
         )
     };
 
-    window.set_position(PhysicalPosition::new(x as i32, y as i32))?;
-    Ok(())
+    Ok(PhysicalPosition::new(x as i32, y as i32))
+}
+
+fn tray_anchor_position(
+    app: &tauri::AppHandle,
+    fallback_position: PhysicalPosition<f64>,
+    tray_rect: Rect,
+) -> tauri::Result<PhysicalPosition<f64>> {
+    let monitors = app.available_monitors()?;
+
+    for monitor in &monitors {
+        let scale_factor = monitor.scale_factor();
+        let rect_position = tray_rect.position.to_physical::<f64>(scale_factor);
+        let rect_size = tray_rect.size.to_physical::<f64>(scale_factor);
+        let anchor_position = PhysicalPosition::new(
+            rect_position.x + rect_size.width / 2.0,
+            rect_position.y + rect_size.height,
+        );
+
+        if monitor_contains_position(monitor, anchor_position) {
+            return Ok(anchor_position);
+        }
+    }
+
+    Ok(fallback_position)
+}
+
+fn monitor_contains_position(
+    monitor: &tauri::Monitor,
+    position: PhysicalPosition<f64>,
+) -> bool {
+    let monitor_position = monitor.position();
+    let monitor_size = monitor.size();
+    let min_x = monitor_position.x as f64;
+    let min_y = monitor_position.y as f64;
+    let max_x = (monitor_position.x + monitor_size.width as i32) as f64;
+    let max_y = (monitor_position.y + monitor_size.height as i32) as f64;
+
+    position.x >= min_x && position.x <= max_x && position.y >= min_y && position.y <= max_y
 }
 
 fn show_main_window(app: &tauri::AppHandle) {
