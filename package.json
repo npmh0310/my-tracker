@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "app:build": "tauri build",
+    "app:open": "open \"src-tauri/target/release/bundle/macos/Personal Tracker.app\""
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",

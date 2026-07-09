@@ -7,7 +7,7 @@ import type { TrayCardTab } from "./types";
 import type { Note } from "../notes/types";
 
 export function TrayCard() {
-  const [activeTab, setActiveTab] = useState<TrayCardTab>("todo");
+  const [activeTab, setActiveTab] = useState<TrayCardTab>("notes");
   const [, setNotes] = useState<Note[]>([]);
 
   return (

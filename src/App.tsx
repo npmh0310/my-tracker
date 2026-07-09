@@ -43,7 +43,7 @@ function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
-  const [activeTab, setActiveTab] = useState<ActiveTab>("todos");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("notes");
   const [loadedTabs, setLoadedTabs] = useState<Record<ActiveTab, boolean>>({
     todos: false,
     pomodoro: false,
